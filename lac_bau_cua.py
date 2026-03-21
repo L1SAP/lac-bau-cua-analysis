@@ -1,6 +1,3 @@
-"""Vietnamese Lunar New Year game called Lac Bau Cua.
-Simulate rounds being played, store and track results, and export data to a CSV for analysis.
-"""
 import random
 import os
 import csv
@@ -28,10 +25,11 @@ valid_choice = {"DEER", "GOURD", "ROOSTER", "FISH", "CRAB", "SHRIMP"}
 
 def instructions():
     print("\nA traditional Vietnamese betting game\n")
-    print("Three six-sided dice are rolled each round. Each die contains one of six symbols:")
+    print("Each round uses three dice. Each die has one of these six symbols:")
     print("Gourd (Bầu), Crab (Cua), Shrimp (Tôm), Fish (Cá), Rooster (Gà), Deer (Nai)\n")
     print("These symbols are represented on a 2 x 3 game board:")
-    gameboard()
+    for label in symbols:
+        print(label)
     print("\nPlace bets on one or more symbols. Winnings depend on how many dice match each symbol you bet on.")
     print("""
     Payouts:
@@ -41,26 +39,17 @@ def instructions():
     No Match: lose that bet\n""")
 
 
-def gameboard():
-    """Display the gameboard symbol names."""
-    for label in symbols:
-        print(label)
-
-
-def die():
-    """Return one random symbol from the board."""
-    row = random.randint(0, 1)
-    col = random.randint(0, 2)
-    return symbols[row][col]
-
-
 def three_dice():
-    """Return results of rolling three dice."""
-    return [die(), die(), die()]
+    dice_results = []
+    for _ in range(3):
+        row = random.randint(0, 1)
+        col = random.randint(0, 2)
+        dice_results.append(symbols[row][col])
+
+    return dice_results
 
 
 def money_prompt(prompt):
-    """Prompt until the user enters a positive dollar amount."""
     while True:
         try:
             value = float(input(prompt))
@@ -73,7 +62,6 @@ def money_prompt(prompt):
 
 
 def round_prompt(prompt):
-    """Prompt until the user enters a positive whole number."""
     while True:
         try:
             value = int(input(prompt).strip())
@@ -86,7 +74,6 @@ def round_prompt(prompt):
 
 
 def mode_prompt(prompt, valid_modes):
-    """Prompt until the user enters one of the valid options."""
     while True:
         mode = input(prompt).strip().upper()
         if mode in valid_modes:
@@ -94,8 +81,8 @@ def mode_prompt(prompt, valid_modes):
         print(f"Enter one of these: {', '.join(valid_modes)}.")
 
 
+#Calculate total profit for one round based on the dice results.
 def payout(bets, dice_results, print_detail=True):
-    """Calculate total profit for one round based on the dice results."""
     total_return = 0.0
     total_profit = 0.0
 
@@ -123,10 +110,19 @@ def payout(bets, dice_results, print_detail=True):
     return round(total_profit, 2)
 
 
+#Returns bet choices made with amount betted on
+def bet_symbols(usr_bets):
+    parts = []
+    for choice in sorted(usr_bets):
+        parts.append(f"{choice}:{usr_bets[choice]}")
+
+    return "|".join(parts)
+
+
+#Collect starting bankroll and user bet allocations.
 def game_setup():
-    """Collect starting bankroll and user bet allocations."""
     print("\nBuild your betting strategy by placing bets on one or more symbols.")
-    print("This strategy will be used for all sessions in this simulation run.\n")
+    print("The same strategy will be used for every session in this simulation.\n")
 
     start_money = money_prompt("Enter your starting money: ")
     remaining_money = start_money
@@ -139,7 +135,7 @@ def game_setup():
             break
 
         if choice not in valid_choice:
-            print("Not a valid choice. TRY AGAIN. Choices are: (DEER, GOURD, ROOSTER, FISH, CRAB, SHRIMP) ")
+            print(f"Not a valid choice. TRY AGAIN. Choices are: {', '.join(valid_choice)}.")
             continue
 
         bet = money_prompt(f"Bet amount for {choice}: ")
@@ -150,8 +146,8 @@ def game_setup():
         usr_bets[choice] = usr_bets.get(choice, 0) + bet
         remaining_money = round(remaining_money - bet, 2)
 
-        print("Current bets:", usr_bets)
-        print("Money remaining:", remaining_money)
+        print("Current bets:", bet_symbols(usr_bets))
+        print(f"Money remaining: ${remaining_money:.2f}")
 
     if not usr_bets:
         print("No bets placed.")
@@ -160,8 +156,8 @@ def game_setup():
     return start_money, usr_bets
 
 
+#Run a single round and return updated bankroll, dice results, and profit.
 def run_round(bankroll, usr_bets, print_detail=True):
-    """Run a single round and return updated bankroll, dice results, and profit."""
     dice_results = three_dice()
     if print_detail:
         print("Dice Results:", dice_results)
@@ -170,8 +166,8 @@ def run_round(bankroll, usr_bets, print_detail=True):
     return bankroll, dice_results, profit
 
 
+#Run a session of repeated rounds until max rounds is reached or bankroll is too low to continue.
 def run_session(start_money, usr_bets, max_rounds):
-    """Run a session of repeated rounds until max rounds is reached or bankroll is too low to continue."""
     cost_per_round = sum(usr_bets.values())
     bankroll = start_money
     rounds_survived = 0
@@ -185,13 +181,8 @@ def run_session(start_money, usr_bets, max_rounds):
     return rounds_survived, bankroll
 
 
-def bet_symbols(usr_bets):
-    """Convert the bet sheet into a string for CSV output."""
-    return "|".join(f"{choice}:{usr_bets[choice]}" for choice in sorted(usr_bets.keys()))
-
-
+#Run multiple simulation sessions and save the results to a CSV file.
 def run_sim(start_money, usr_bets):
-    """Run multiple simulation sessions and save the results to a CSV file."""
     cost_per_round = sum(usr_bets.values())
     if cost_per_round <= 0:
         print("No bets placed.\n")
@@ -204,11 +195,11 @@ def run_sim(start_money, usr_bets):
     if not strat_name:
         strat_name = "simulation"
 
-    file_name = f"{strat_name}.csv"
-    file_exists = os.path.exists(file_name)
+    filename = f"{strat_name}.csv"
+    file_exists = os.path.exists(filename)
     bet_symbol_names = bet_symbols(usr_bets)
 
-    with open(file_name, mode="a", newline="") as f:
+    with open(filename, mode="a", newline="") as f:
         writer = csv.writer(f)
 
         if not file_exists:
@@ -223,13 +214,13 @@ def run_sim(start_money, usr_bets):
                 "BetSymbols"
             ])
 
-        print(f"\n--- SIMULATION ---")
-        print(f"Saving to: {file_name}")
-        print(f"Sessions: {sessions}")
-        print(f"Max rounds: {max_rounds}")
+        print("\n--- SIMULATION ---")
+        print("Saving to:", filename)
+        print("Sessions:", sessions)
+        print("Max rounds:", max_rounds)
         print(f"Starting bankroll: ${start_money:.2f}")
         print(f"Cost per round: ${cost_per_round:.2f}")
-        print(f"Bet symbols for strategy: {usr_bets}\n")
+        print("Bet symbols for strategy:", bet_symbol_names)
 
         for session_num in range(1, sessions + 1):
             rounds_survived, final_bankroll = run_session(start_money, usr_bets, max_rounds)
@@ -244,28 +235,23 @@ def run_sim(start_money, usr_bets):
                 bet_symbol_names
             ])
 
-    print(f"\nSaved {sessions} sessions to {file_name}\n")
+    print(f"\nSaved {sessions} sessions to {filename}\n")
 
 
-def main():
-    print(logo)
-    while True:
-        mode = mode_prompt("INSTRUCTIONS, PLAY, or EXIT: ", {"INSTRUCTIONS", "PLAY", "EXIT"})
+print(logo)
+while True:
+    mode = mode_prompt("INSTRUCTIONS, SIM, or EXIT: ", {"INSTRUCTIONS", "SIM", "EXIT"})
 
-        if mode == "EXIT":
-            break
+    if mode == "EXIT":
+        break
 
-        if mode == "INSTRUCTIONS":
-            instructions()
-            continue
+    if mode == "INSTRUCTIONS":
+        instructions()
+        continue
 
-        start_money, usr_bets = game_setup()
-        if start_money is None:
-            print("Returning to menu.\n")
-            continue
+    start_money, usr_bets = game_setup()
+    if start_money is None:
+        print("Returning to menu.\n")
+        continue
 
-        run_sim(start_money, usr_bets)
-
-
-if __name__ == "__main__":
-    main()
+    run_sim(start_money, usr_bets)
