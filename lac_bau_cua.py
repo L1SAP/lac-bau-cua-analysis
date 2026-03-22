@@ -205,13 +205,13 @@ def run_sim(start_money, usr_bets):
         if not file_exists:
             writer.writerow([
                 "Session",
-                "StrategyName",
-                "StartingBankroll",
-                "MaxRounds",
-                "CostPerRound",
-                "RoundsSurvived",
-                "FinalBankroll",
-                "BetSymbols"
+                "Strategy_Name",
+                "Starting_Bankroll",
+                "Max_Rounds",
+                "Cost_Per_Round",
+                "Rounds_Survived",
+                "Final_Bankroll",
+                "Bet_Sheet"
             ])
 
         print("\n--- SIMULATION ---")
