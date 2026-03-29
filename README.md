@@ -12,5 +12,5 @@ This project simulates 1,000 sessions across different strategies, analyzes surv
 No strategy survives all 10 rounds or walks away with profit. Profiting is possible but rare. Conserving your bankroll and spreading bets is best for survival. If you're sick of your family, going all in with any spread will get you out the game faster with potential to win big.
 
 ## Analysis
-For full analysis with graphs, findings, and conclusion, see the 
+For full analysis with graphs, findings, and conclusion:
 [Jupyter Notebook](analysis.ipynb)
